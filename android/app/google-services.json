@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "615512054465",
+    "project_id": "tentapp-b3a8e",
+    "storage_bucket": "tentapp-b3a8e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:615512054465:android:33f68ba936cddefa239240",
+        "android_client_info": {
+          "package_name": "com.example.tentapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCiKk158QslRZ-xBfHs-zLlhBral8dZZKs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
