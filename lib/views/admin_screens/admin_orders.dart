@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tentapp/controller/admin_controller.dart';
+import 'package:tentapp/views/admin_screens/deliveries.dart';
 
 import '../../data/oders.dart';
 
@@ -123,6 +124,73 @@ class AdminOrdersScreen extends StatelessWidget {
                 isPaid = value ?? false;
               },
             ),
+            TextButton(
+              child: Text('Got to delivery'),
+              onPressed: () {
+                Get.to(() => DeliveryScreen(
+                      order: order,
+                    ));
+              },
+            ),
+            // Checkbox(
+            //   value: isDelivered,
+            //   onChanged: (value) {
+            //     isDelivered = value ?? false;
+            //   },
+            // ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (isDelivered) {
+                // Navigate to DeliveryScreen with the selected order
+                //Get.to(DeliveryScreen(order: order));
+              } else {
+                // Update the order status (mark as paid)
+                if (order is RentalOrder) {
+                  _adminController.updateRentalOrderStatus(
+                      order, isPaid, isDelivered);
+                } else if (order is HirePurchaseOrder) {
+                  _adminController.updateHirePurchaseOrderStatus(
+                      order, isPaid, isDelivered);
+                }
+              }
+              Navigator.of(context).pop();
+            },
+            child: Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+/*
+
+  void _showUpdateStatusDialog(BuildContext context, dynamic order) {
+    bool isPaid = order.isPaid;
+    bool isDelivered = order.isDelivered;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Update Status'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Mark as Paid'),
+            Checkbox(
+              value: isPaid,
+              onChanged: (value) {
+                isPaid = value ?? false;
+              },
+            ),
             Text('Mark as Delivered'),
             Checkbox(
               value: isDelivered,
@@ -156,6 +224,7 @@ class AdminOrdersScreen extends StatelessWidget {
       ),
     );
   }
+*/
 }
 
 class CancelOrderDialog extends StatelessWidget {

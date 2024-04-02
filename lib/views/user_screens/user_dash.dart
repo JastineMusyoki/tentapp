@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:tentapp/controller/admin_controller.dart';
+import 'package:tentapp/views/user_screens/user_deliveries.dart';
 
 import '../../controller/auth_controller.dart';
 import 'orders_screen.dart';
@@ -68,7 +69,7 @@ class UserDashboard extends StatelessWidget {
             SizedBox(height: 20),
             _buildDashboardItem(
               'View Your Orders',
-              'Track your order status',
+              'Manage your orders here.',
               Icons.shopping_cart,
               Colors.blueAccent,
               () {
@@ -76,15 +77,16 @@ class UserDashboard extends StatelessWidget {
               },
             ),
             SizedBox(height: 20),
-            // _buildDashboardItem(
-            //   'Account Information',
-            //   'View and edit your account details',
-            //   Icons.account_circle,
-            //   Colors.green,
-            //   () {
-            //     // Navigate to Account Information screen
-            //   },
-            // ),
+            _buildDashboardItem(
+              'Deliveries',
+              'Track your dispached orders',
+              Icons.delivery_dining_outlined,
+              Colors.green,
+              () {
+                // Navigate to Account Information screen
+                Get.to(() => UserDeliveriesScreen());
+              },
+            ),
           ],
         ),
       ),

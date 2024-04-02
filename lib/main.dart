@@ -30,6 +30,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Tent Rental App',
         theme: ThemeData(
           primarySwatch: Colors.blue,

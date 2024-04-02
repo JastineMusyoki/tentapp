@@ -8,6 +8,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart' as dotenv;
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:tentapp/data/deliveries_model.dart';
+import 'package:tentapp/views/admin_screens/deliveries_list.dart';
 
 import '../data/oders.dart';
 import '../data/products_model.dart';
@@ -26,6 +28,7 @@ class AdminController extends GetxController {
   RxList<File> selectedImages = RxList<File>([]);
   RxList<RentalOrder> rentalOrders = RxList<RentalOrder>([]);
   RxList<HirePurchaseOrder> hirePurchaseOrders = RxList<HirePurchaseOrder>([]);
+  RxList<Delivery> deliveries = RxList<Delivery>([]);
 
   @override
   void onInit() {
@@ -33,6 +36,7 @@ class AdminController extends GetxController {
     fetchTents();
     fetchAllRentalOrders();
     fetchAllHirePurchaseOrders();
+    fetchDeliveries();
   }
 
   Future<void> addTent({
@@ -106,6 +110,85 @@ class AdminController extends GetxController {
     } catch (error) {
       isLoading(false);
       print('Error fetching rental orders: $error');
+    }
+  }
+
+// Method to create a new delivery
+  Future<void> createDelivery(String deliveryId, Delivery delivery) async {
+    try {
+      isLoading(true);
+
+      // Store the delivery in Firestore with the generated ID
+      await _firestore
+          .collection('deliveries')
+          .doc(deliveryId)
+          .set(delivery.toJson());
+
+      isLoading(false);
+      await fetchDeliveries();
+      Get.snackbar('Success', 'Delivery created successfully',
+          backgroundColor: Colors.green);
+      Get.off(() => AdminDeliveriesScreen());
+    } catch (error) {
+      isLoading(false);
+      Get.snackbar('Error', 'Failed to create delivery: $error');
+    }
+  }
+
+  // Method to update the delivery status
+  Future<void> updateDeliveryStatus(String deliveryId, bool isDelivered) async {
+    try {
+      isLoading(true);
+
+      // Update the status in Firestore
+      await _firestore.collection('deliveries').doc(deliveryId).update({
+        'isDelivered': isDelivered,
+      });
+
+      // Fetch all deliveries again
+      await fetchDeliveries();
+
+      isLoading(false);
+      Get.snackbar('Success', 'Delivery status updated successfully',
+          backgroundColor: Colors.green);
+    } catch (error) {
+      isLoading(false);
+      Get.snackbar('Error', 'Failed to update delivery status: $error');
+    }
+  }
+
+  // Method to fetch all deliveries
+  Future<void> fetchDeliveries() async {
+    try {
+      isLoading(true);
+      final querySnapshot = await _firestore.collection('deliveries').get();
+      deliveries.assignAll(
+        querySnapshot.docs.map((doc) => Delivery.fromJson(doc.data())).toList(),
+      );
+      isLoading(false);
+    } catch (error) {
+      isLoading(false);
+      print('Error fetching deliveries: $error');
+    }
+  }
+
+// Method to delete a delivery
+  Future<void> deleteDelivery(String deliveryId) async {
+    try {
+      isLoading(true);
+
+      // Delete the delivery from Firestore
+      await _firestore.collection('deliveries').doc(deliveryId).delete();
+
+      // Fetch deliveries again
+      await fetchDeliveries();
+
+      isLoading(false);
+      Get.snackbar('Success', 'Delivery deleted successfully',
+          backgroundColor: Colors.green);
+    } catch (error) {
+      isLoading(false);
+      Get.snackbar('Error', 'Failed to delete delivery: $error');
     }
   }
 
@@ -204,6 +287,34 @@ class AdminController extends GetxController {
     try {
       isLoading(true);
       final querySnapshot = await _firestore.collection('tents').get();
+      final tentsList = querySnapshot.docs
+          .map((doc) => Tent.fromJson(doc.data()))
+          .where((tent) => tentContainsQuery(tent, searchQuery ?? ''))
+          .toList();
+
+      filteredTents.assignAll(tentsList);
+      tents.assignAll(tentsList);
+
+      isLoading(false);
+    } catch (error) {
+      isLoading(false);
+      print('Error fetching tents: $error');
+    }
+  }
+
+  bool tentContainsQuery(Tent tent, String query) {
+    final lowerCaseQuery = query.toLowerCase();
+    return tent.name.toLowerCase().contains(lowerCaseQuery) ||
+        tent.description.toLowerCase().contains(lowerCaseQuery) ||
+        tent.imagePaths
+            .any((path) => path.toLowerCase().contains(lowerCaseQuery));
+  }
+
+  /*
+  Future<void> fetchTents({String? searchQuery}) async {
+    try {
+      isLoading(true);
+      final querySnapshot = await _firestore.collection('tents').get();
       final tentsList =
           querySnapshot.docs.map((doc) => Tent.fromJson(doc.data())).toList();
 
@@ -224,6 +335,7 @@ class AdminController extends GetxController {
       print('Error fetching tents: $error');
     }
   }
+*/
 
   // Method to perform search and update filtered tents
   void searchTents(String searchText) {

@@ -6,6 +6,7 @@ import 'package:tentapp/controller/admin_controller.dart';
 import 'package:tentapp/controller/auth_controller.dart';
 import 'package:tentapp/views/admin_screens/admin_orders.dart';
 import 'package:tentapp/views/admin_screens/create_product.dart';
+import 'package:tentapp/views/admin_screens/deliveries_list.dart';
 
 import 'product_listings.dart';
 
@@ -90,6 +91,18 @@ class AdminDashboard extends StatelessWidget {
               child: Text('Product List'),
               style: ElevatedButton.styleFrom(
                 primary: Colors.orange,
+                padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+              ),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to the ProductListScreen
+                Get.to(AdminDeliveriesScreen());
+              },
+              child: Text('Deliveries', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                primary: Colors.blueGrey,
                 padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
               ),
             ),
