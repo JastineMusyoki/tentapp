@@ -14,16 +14,16 @@ import '../../data/products_model.dart';
 final userdata = GetStorage();
 // Your existing imports
 
-class HirePurchaseScreen extends StatefulWidget {
+class RentingScreens extends StatefulWidget {
   final Tent tent;
 
-  HirePurchaseScreen({required this.tent});
+  RentingScreens({required this.tent});
 
   @override
-  _HirePurchaseScreenState createState() => _HirePurchaseScreenState();
+  _RentingScreensState createState() => _RentingScreensState();
 }
 
-class _HirePurchaseScreenState extends State<HirePurchaseScreen> {
+class _RentingScreensState extends State<RentingScreens> {
   final AdminController _adminController = Get.find<AdminController>();
 
   late TextEditingController _deliveryInfoController;
@@ -232,7 +232,7 @@ class _HirePurchaseScreenState extends State<HirePurchaseScreen> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            _placeHirePurchaseOrder();
+                            _placeRentalOrder();
                           },
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.symmetric(vertical: 16),
@@ -263,7 +263,7 @@ class _HirePurchaseScreenState extends State<HirePurchaseScreen> {
     }
   }
 
-  void _placeHirePurchaseOrder() {
+  void _placeRentalOrder() {
     if (_startDate == null || _returnDate == null) {
       Get.snackbar('Error', 'Please select start and return dates');
       return;
@@ -288,7 +288,7 @@ class _HirePurchaseScreenState extends State<HirePurchaseScreen> {
     String userEmail = userdata.read('email');
     String documentId = generateRandomString(length: 10);
 
-    HirePurchaseOrder hirePurchaseOrder = HirePurchaseOrder(
+    RentingOrder rentalOrder = RentingOrder(
       id: documentId,
       userEmail: userEmail,
       tent: widget.tent,
@@ -301,7 +301,7 @@ class _HirePurchaseScreenState extends State<HirePurchaseScreen> {
       isPaid: false,
     );
 
-    _adminController.placeHirePurchaseOrder(hirePurchaseOrder);
+    _adminController.placeRentalOrder(rentalOrder);
     Get.back();
   }
 

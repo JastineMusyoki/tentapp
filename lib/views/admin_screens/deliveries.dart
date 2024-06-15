@@ -75,13 +75,13 @@ class DeliveryScreen extends StatelessWidget {
             Text('Delivery for: ${order.userEmail}'),
             SizedBox(height: 8.0),
             // Show additional order details based on the order type (RentalOrder or HirePurchaseOrder)
-            if (order is RentalOrder) ...[
+            if (order is PurchaseOrder) ...[
               Text('Tent Name: ${order.tent.name}'),
               SizedBox(height: 8.0),
               Text('Quantity: ${order.quantity}'),
               SizedBox(height: 8.0),
               Text('Total Price: KES ${order.totalPrice.toStringAsFixed(2)}'),
-            ] else if (order is HirePurchaseOrder) ...[
+            ] else if (order is RentingOrder) ...[
               Text('Tent Name: ${order.tent.name}'),
               SizedBox(height: 8.0),
               Text('Quantity: ${order.quantity}'),

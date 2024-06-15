@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server.dart';
 import 'package:mpesa_flutter_plugin/mpesa_flutter_plugin.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart' as dotenv;
 import 'package:get/get.dart';
@@ -26,8 +28,8 @@ class AdminController extends GetxController {
   RxBool isLoading = false.obs;
   RxList<Tent> tents = RxList<Tent>([]);
   RxList<File> selectedImages = RxList<File>([]);
-  RxList<RentalOrder> rentalOrders = RxList<RentalOrder>([]);
-  RxList<HirePurchaseOrder> hirePurchaseOrders = RxList<HirePurchaseOrder>([]);
+  RxList<RentingOrder> rentalOrders = RxList<RentingOrder>([]);
+  RxList<PurchaseOrder> purchaseOrders = RxList<PurchaseOrder>([]);
   RxList<Delivery> deliveries = RxList<Delivery>([]);
 
   @override
@@ -35,7 +37,7 @@ class AdminController extends GetxController {
     super.onInit();
     fetchTents();
     fetchAllRentalOrders();
-    fetchAllHirePurchaseOrders();
+    fetchAllPurchaseOrders();
     fetchDeliveries();
   }
 
@@ -92,24 +94,43 @@ class AdminController extends GetxController {
     }
   }
 
+  //search orders
+  void searchOrders(String searchText) {
+    searchText = searchText.toLowerCase();
+    final List<RentingOrder> filteredRentalOrders = rentalOrders
+        .where((order) =>
+            order.userEmail.toLowerCase().contains(searchText) ||
+            order.id.toLowerCase().contains(searchText))
+        .toList();
+    final List<PurchaseOrder> filteredPurchaseOrders = purchaseOrders
+        .where((order) =>
+            order.userEmail.toLowerCase().contains(searchText) ||
+            order.id.toLowerCase().contains(searchText))
+        .toList();
+
+    rentalOrders.assignAll(filteredRentalOrders);
+    purchaseOrders.assignAll(filteredPurchaseOrders);
+  }
+
 //rentaal orders by user
   Future<void> fetchAllRentalOrders() async {
     try {
       isLoading(true);
-      final querySnapshot = await _firestore.collection('rental_orders').get();
+      final querySnapshot = await _firestore.collection('renting_orders').get();
       querySnapshot.docs.forEach((doc) {
         print(
-            'Rental Order ID: ${doc.id}, User Email: ${doc['userEmail']}, Tent Name: ${doc['tent']['name']}, Quantity: ${doc['quantity']}, Total Price: ${doc['totalPrice']}, Delivery Info: ${doc['deliveryInfo']}, Created At: ${doc['createdAt']}');
+            'Rental Order ID: ${doc.id}, User Email: ${doc['userEmail']}, Tent Name: ${doc['tent']['name']}, Quantity: ${doc['quantity']}, Total Price: ${doc['totalPrice']}, Delivery Info: ${doc['deliveryInfo']}}');
       });
       rentalOrders.assignAll(
         querySnapshot.docs
-            .map((doc) => RentalOrder.fromJson(doc.data()))
+            .map((doc) => RentingOrder.fromJson(doc.data()))
             .toList(),
       );
       isLoading(false);
     } catch (error) {
       isLoading(false);
       print('Error fetching rental orders: $error');
+      throw Exception(error);
     }
   }
 
@@ -192,6 +213,34 @@ class AdminController extends GetxController {
     }
   }
 
+//send stmp reminder
+  Future<void> sendReminder(RentingOrder order, String _message) async {
+    isLoading(true); // Set isLoading to true before sending email
+    final _email = 'j.n.houdini@gmail.com';
+
+    final smtpServer =
+        gmail(_email, 'dpue xniz tlbs zhax'); // Your Gmail credentials
+
+    // Create an email message
+    final server_message = Message()
+      ..from = Address(_email)
+      ..recipients.add(order.userEmail) // Recipient's email
+      ..subject =
+          'Reminder for Rental Order ${order.id}. Order due for ${order.returnDate}.'
+      ..text = _message; // Your reminder message
+
+    try {
+      final sendReport = await send(server_message, smtpServer);
+      print('Reminder email sent: ${sendReport.toString()}');
+    } catch (e) {
+      print('Error sending reminder email: $e');
+      throw Exception(e);
+      // Handle the error accordingly
+    } finally {
+      isLoading(false); // Set isLoading back to false after operation completes
+    }
+  }
+
 //mpesa
   // Mpesa Payment
   Future<void> startCheckout(
@@ -210,7 +259,7 @@ class AdminController extends GetxController {
         partyB: '174379', // Replace with your short code
         callBackURL: Uri.parse(
             'https://mydomain.com/path'), // Replace with your callback URL
-        accountReference: "order_number",
+        accountReference: "Tent ative Reference",
         phoneNumber: userPhone,
         baseUri: Uri.parse('https://sandbox.safaricom.co.ke'),
         transactionDesc: "purchase",
@@ -221,21 +270,21 @@ class AdminController extends GetxController {
       print("TRANSACTION RESULT: $transactionInitialisation");
       debugPrint(order.toString());
 
-      if (order is RentalOrder) {
+      if (order is RentingOrder) {
         await FirebaseFirestore.instance
-            .collection('rental_orders')
+            .collection('renting_orders')
             .doc(order.id)
             .update({'isPaid': true});
-      } else if (order is HirePurchaseOrder) {
+      } else if (order is PurchaseOrder) {
         await FirebaseFirestore.instance
-            .collection('hire_purchase_orders')
+            .collection('purchase_orders') //
             .doc(order.id)
             .update({'isPaid': true});
       }
 
       // Fetch updated rental and hire purchase orders
       await fetchAllRentalOrders();
-      await fetchAllHirePurchaseOrders();
+      await fetchAllPurchaseOrders();
       Get.snackbar('Success', 'Payment processed successfully',
           backgroundColor: Colors.green);
 
@@ -310,33 +359,6 @@ class AdminController extends GetxController {
             .any((path) => path.toLowerCase().contains(lowerCaseQuery));
   }
 
-  /*
-  Future<void> fetchTents({String? searchQuery}) async {
-    try {
-      isLoading(true);
-      final querySnapshot = await _firestore.collection('tents').get();
-      final tentsList =
-          querySnapshot.docs.map((doc) => Tent.fromJson(doc.data())).toList();
-
-      // If search query is provided, filter tents based on the name
-      if (searchQuery != null && searchQuery.isNotEmpty) {
-        filteredTents.assignAll(tentsList
-            .where((tent) =>
-                tent.name.toLowerCase().contains(searchQuery.toLowerCase()))
-            .toList());
-      } else {
-        filteredTents.assignAll(tentsList);
-      }
-      tents.assignAll(tentsList);
-
-      isLoading(false);
-    } catch (error) {
-      isLoading(false);
-      print('Error fetching tents: $error');
-    }
-  }
-*/
-
   // Method to perform search and update filtered tents
   void searchTents(String searchText) {
     fetchTents(searchQuery: searchText);
@@ -381,36 +403,36 @@ class AdminController extends GetxController {
   }
 
 // Method to fetch all hire purchase orders
-  Future<void> fetchAllHirePurchaseOrders() async {
+  Future<void> fetchAllPurchaseOrders() async {
     try {
       isLoading(true);
       final querySnapshot =
-          await _firestore.collection('hire_purchase_orders').get();
-      hirePurchaseOrders.assignAll(
+          await _firestore.collection('purchase_orders').get();
+      purchaseOrders.assignAll(
         querySnapshot.docs
-            .map((doc) => HirePurchaseOrder.fromJson(doc.data()))
+            .map((doc) => PurchaseOrder.fromJson(doc.data()))
             .toList(),
       );
       isLoading(false);
     } catch (error) {
       isLoading(false);
-      print('Error fetching hire purchase orders: $error');
+      debugPrint('Error fetching purchase orders: $error');
+      throw Exception(error);
     }
   }
 
   // Method to place a hire purchase order
-  Future<void> placeHirePurchaseOrder(
-      HirePurchaseOrder hirePurchaseOrder) async {
+  Future<void> placePurchaseOrder(PurchaseOrder purchaseOrder) async {
     try {
       isLoading(true);
 
       // Store the hire purchase order in Firestore
       await _firestore
-          .collection('hire_purchase_orders')
-          .doc(hirePurchaseOrder.id)
-          .set(hirePurchaseOrder.toJson());
+          .collection('purchase_orders')
+          .doc(purchaseOrder.id)
+          .set(purchaseOrder.toJson());
 
-      fetchAllHirePurchaseOrders();
+      fetchAllPurchaseOrders();
 
       isLoading(false);
       Get.snackbar('Success', 'Order placed successfully!',
@@ -422,13 +444,13 @@ class AdminController extends GetxController {
   }
 
 //user place order
-  Future<void> placeRentalOrder(RentalOrder rentalOrder) async {
+  Future<void> placeRentalOrder(RentingOrder rentalOrder) async {
     try {
       isLoading(true);
 
       // Store the rental order in Firestore
       await _firestore
-          .collection('rental_orders')
+          .collection('renting_orders')
           .doc(rentalOrder.id)
           .set(rentalOrder.toJson());
 
@@ -450,12 +472,12 @@ class AdminController extends GetxController {
 
       // Determine the collection based on the type of order
       String collection;
-      if (order is RentalOrder) {
-        collection = 'rental_orders';
-      } else if (order is HirePurchaseOrder) {
-        collection = 'hire_purchase_orders';
+      if (order is RentingOrder) {
+        collection = 'renting_orders';
+      } else if (order is PurchaseOrder) {
+        collection = 'purchase_orders';
       } else {
-        throw Exception('Unknown order type');
+        throw Exception('Order no longer exists!');
       }
 
       // Delete the order from Firestore
@@ -463,11 +485,11 @@ class AdminController extends GetxController {
 
       // Clear reactive lists
       rentalOrders.clear();
-      hirePurchaseOrders.clear();
+      purchaseOrders.clear();
 
       // Fetch orders again
       await fetchAllRentalOrders();
-      await fetchAllHirePurchaseOrders();
+      await fetchAllPurchaseOrders();
 
       isLoading(false);
       Get.snackbar('Success', 'Order cancelled successfully',
@@ -486,10 +508,10 @@ class AdminController extends GetxController {
 
       // Determine the collection based on the type of order
       String collection;
-      if (order is RentalOrder) {
-        collection = 'rental_orders';
-      } else if (order is HirePurchaseOrder) {
-        collection = 'hire_purchase_orders';
+      if (order is RentingOrder) {
+        collection = 'renting_orders';
+      } else if (order is PurchaseOrder) {
+        collection = 'purchase_orders';
       } else {
         throw Exception('Unknown order type');
       }
@@ -501,10 +523,10 @@ class AdminController extends GetxController {
       });
 
       // Fetch all orders again
-      if (order is RentalOrder) {
+      if (order is RentingOrder) {
         await fetchAllRentalOrders();
-      } else if (order is HirePurchaseOrder) {
-        await fetchAllHirePurchaseOrders();
+      } else if (order is PurchaseOrder) {
+        await fetchAllPurchaseOrders();
       }
 
       isLoading(false);
@@ -518,12 +540,12 @@ class AdminController extends GetxController {
 
   // Method to update the status of a rental order
   Future<void> updateRentalOrderStatus(
-      RentalOrder order, bool isPaid, bool isDelivered) async {
+      RentingOrder order, bool isPaid, bool isDelivered) async {
     try {
       isLoading(true);
 
       // Update the status in Firestore
-      await _firestore.collection('rental_orders').doc(order.id).update({
+      await _firestore.collection('renting_orders').doc(order.id).update({
         'isPaid': isPaid,
         'isDelivered': isDelivered,
       });
@@ -536,24 +558,24 @@ class AdminController extends GetxController {
           backgroundColor: Colors.green);
     } catch (error) {
       isLoading(false);
-      Get.snackbar('Error', 'Failed to update rental order status: $error');
+      Get.snackbar('Error', 'Something went wrong: $error');
     }
   }
 
   // Method to update the status of a hire purchase order
-  Future<void> updateHirePurchaseOrderStatus(
-      HirePurchaseOrder order, bool isPaid, bool isDelivered) async {
+  Future<void> updatePurchaseOrderStatus(
+      PurchaseOrder order, bool isPaid, bool isDelivered) async {
     try {
       isLoading(true);
 
       // Update the status in Firestore
-      await _firestore.collection('hire_purchase_orders').doc(order.id).update({
+      await _firestore.collection('purchase_orders').doc(order.id).update({
         'isPaid': isPaid,
         'isDelivered': isDelivered,
       });
 
       // Fetch all hire purchase orders again
-      await fetchAllHirePurchaseOrders();
+      await fetchAllPurchaseOrders();
 
       isLoading(false);
       Get.snackbar('Success', 'Order status updated successfully',

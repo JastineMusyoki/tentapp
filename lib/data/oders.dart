@@ -1,24 +1,23 @@
 import 'products_model.dart';
 
-class RentalOrder {
+class PurchaseOrder {
   final String id;
   final String userEmail;
   final Tent tent;
   final int quantity;
   final double totalPrice;
   final String deliveryInfo;
-  final DateTime createdAt;
+
   final bool isPaid;
   final bool isDelivered;
 
-  RentalOrder({
+  PurchaseOrder({
     required this.id,
     required this.userEmail,
     required this.tent,
     required this.quantity,
     required this.totalPrice,
     required this.deliveryInfo,
-    required this.createdAt,
     this.isPaid = false,
     this.isDelivered = false,
   });
@@ -31,28 +30,26 @@ class RentalOrder {
       'quantity': quantity,
       'totalPrice': totalPrice,
       'deliveryInfo': deliveryInfo,
-      'createdAt': createdAt.toIso8601String(),
       'isPaid': isPaid,
       'isDelivered': isDelivered,
     };
   }
 
-  factory RentalOrder.fromJson(Map<String, dynamic> json) {
-    return RentalOrder(
+  factory PurchaseOrder.fromJson(Map<String, dynamic> json) {
+    return PurchaseOrder(
       id: json['id'],
       userEmail: json['userEmail'],
       tent: Tent.fromJson(json['tent']),
       quantity: json['quantity'],
       totalPrice: json['totalPrice'],
       deliveryInfo: json['deliveryInfo'],
-      createdAt: DateTime.parse(json['createdAt']),
       isPaid: json['isPaid'] ?? false,
       isDelivered: json['isDelivered'] ?? false,
     );
   }
 }
 
-class HirePurchaseOrder {
+class RentingOrder {
   final String id;
   final String userEmail;
   final Tent tent;
@@ -63,19 +60,20 @@ class HirePurchaseOrder {
   final String returnDate;
   final bool isPaid;
   final bool isDelivered;
+  final bool? returned;
 
-  HirePurchaseOrder({
-    required this.id,
-    required this.userEmail,
-    required this.tent,
-    required this.quantity,
-    required this.totalPrice,
-    required this.deliveryInfo,
-    required this.startDate,
-    required this.returnDate,
-    this.isPaid = false,
-    this.isDelivered = false,
-  });
+  RentingOrder(
+      {required this.id,
+      required this.userEmail,
+      required this.tent,
+      required this.quantity,
+      required this.totalPrice,
+      required this.deliveryInfo,
+      required this.startDate,
+      required this.returnDate,
+      this.isPaid = false,
+      this.isDelivered = false,
+      this.returned = false});
 
   Map<String, dynamic> toJson() {
     return {
@@ -89,11 +87,12 @@ class HirePurchaseOrder {
       'returnDate': returnDate,
       'isPaid': isPaid,
       'isDelivered': isDelivered,
+      'returned': returned
     };
   }
 
-  factory HirePurchaseOrder.fromJson(Map<String, dynamic> json) {
-    return HirePurchaseOrder(
+  factory RentingOrder.fromJson(Map<String, dynamic> json) {
+    return RentingOrder(
       id: json['id'],
       userEmail: json['userEmail'],
       tent: Tent.fromJson(json['tent']),
@@ -104,6 +103,7 @@ class HirePurchaseOrder {
       returnDate: json['returnDate'],
       isPaid: json['isPaid'] ?? false,
       isDelivered: json['isDelivered'] ?? false,
+      returned: json['returned'] ?? false,
     );
   }
 }

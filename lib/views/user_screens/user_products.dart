@@ -1,18 +1,11 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tentapp/views/user_screens/rental_screen.dart';
+import 'package:tentapp/views/user_screens/purchasing_screen.dart';
+import 'package:tentapp/views/user_screens/renting_screen.dart';
 
 import '../../controller/admin_controller.dart';
 import '../../data/products_model.dart';
-import 'purchase_screen.dart';
-
-import 'package:carousel_slider/carousel_slider.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:tentapp/controller/admin_controller.dart';
-import 'package:tentapp/views/user_screens/purchase_screen.dart';
-import 'package:tentapp/views/user_screens/rental_screen.dart';
 
 class ProductsScreen extends StatelessWidget {
   final AdminController _adminController = Get.find<AdminController>();
@@ -124,14 +117,14 @@ class ProductsScreen extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {
                     // Handle rent button click
-                    Get.to(RentScreen(tent: tent));
+                    Get.to(PurchasingScreen(tent: tent));
                   },
                   child: Text('Purchase'),
                 ),
                 ElevatedButton(
                   onPressed: () {
                     // Handle purchase button click
-                    Get.to(HirePurchaseScreen(tent: tent));
+                    Get.to(RentingScreens(tent: tent));
                   },
                   child: Text('Rent'),
                 ),

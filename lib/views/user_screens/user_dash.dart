@@ -81,7 +81,7 @@ class UserDashboard extends StatelessWidget {
               'Deliveries',
               'Track your dispached orders',
               Icons.delivery_dining_outlined,
-              Colors.green,
+              const Color.fromRGBO(76, 175, 80, 1),
               () {
                 // Navigate to Account Information screen
                 Get.to(() => UserDeliveriesScreen());

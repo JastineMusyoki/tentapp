@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:tentapp/controller/admin_controller.dart';
+import 'package:tentapp/views/user_screens/user_deliveries.dart';
+
+import '../../data/oders.dart';
 
 class OrdersScreen extends StatelessWidget {
   final AdminController _adminController = Get.find<AdminController>();
 
   @override
   Widget build(BuildContext context) {
-    _adminController.fetchAllHirePurchaseOrders();
+    _adminController.fetchAllPurchaseOrders();
     _adminController.fetchAllRentalOrders();
     return Scaffold(
       appBar: AppBar(
@@ -26,6 +29,12 @@ class OrdersScreen extends StatelessWidget {
           }),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Get.off(UserDeliveriesScreen());
+        },
+        child: Icon(Icons.add),
+      ),
     );
   }
 
@@ -42,10 +51,7 @@ class OrdersScreen extends StatelessWidget {
           ),
           Expanded(
             child: TabBarView(
-              children: [
-                _buildHirePurchaseOrders(),
-                _buildRentalOrders(),
-              ],
+              children: [_buildRentalOrders(), _buildPurchaseOrders()],
             ),
           ),
         ],
@@ -53,11 +59,11 @@ class OrdersScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHirePurchaseOrders() {
+  Widget _buildPurchaseOrders() {
     return Obx(() {
       final userdata = GetStorage();
       final useremail = userdata.read('email');
-      final userOrders = _adminController.hirePurchaseOrders
+      final userOrders = _adminController.purchaseOrders
           .where((order) => order.userEmail == useremail)
           .toList();
 
@@ -77,26 +83,12 @@ class OrdersScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Total Price: ${order.totalPrice.toStringAsFixed(2)}'),
+                Text('Item:  ${order.tent.name}'),
+                Text('Delivery info:  ${order.deliveryInfo}'),
                 _buildStatusIndicator(order.isDelivered, order.isPaid),
               ],
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.cancel),
-                  onPressed: () {
-                    _showCancelOrderDialog(context, order);
-                  },
-                ),
-                IconButton(
-                  icon: Icon(Icons.payment),
-                  onPressed: () {
-                    _showPaymentDialog(context, order);
-                  },
-                ),
-              ],
-            ),
+            trailing: _buildOrderActionsDropdown(context, order),
           );
         },
       );
@@ -127,26 +119,14 @@ class OrdersScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Total Price: ${order.totalPrice.toStringAsFixed(2)}'),
+                Text('Item:  ${order.tent.name}'),
+                Text('Delivery info:  ${order.deliveryInfo}'),
+                Text('Ordering Date:  ${order.startDate}'),
+                Text('Return Date:  ${order.returnDate}'),
                 _buildStatusIndicator(order.isDelivered, order.isPaid),
               ],
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.cancel),
-                  onPressed: () {
-                    _showCancelOrderDialog(context, order);
-                  },
-                ),
-                IconButton(
-                  icon: Icon(Icons.payment),
-                  onPressed: () {
-                    _showPaymentDialog(context, order);
-                  },
-                ),
-              ],
-            ),
+            trailing: _buildOrderActionsDropdown(context, order),
           );
         },
       );
@@ -155,16 +135,8 @@ class OrdersScreen extends StatelessWidget {
 
   Widget _buildStatusIndicator(bool isDelivered, bool isPaid) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          isDelivered ? Icons.check_circle : Icons.cancel,
-          color: isDelivered ? Colors.green : Colors.red,
-        ),
-        SizedBox(width: 5),
-        Text(
-          isDelivered ? 'Delivered' : 'Not Delivered',
-          style: TextStyle(color: isDelivered ? Colors.green : Colors.red),
-        ),
         SizedBox(width: 10),
         Icon(
           isPaid ? Icons.check_circle : Icons.cancel,
@@ -175,6 +147,54 @@ class OrdersScreen extends StatelessWidget {
           isPaid ? 'Paid' : 'Not Paid',
           style: TextStyle(color: isPaid ? Colors.green : Colors.red),
         ),
+      ],
+    );
+  }
+
+  Widget _buildOrderActionsDropdown(BuildContext context, dynamic order) {
+    return DropdownButton<String>(
+      onChanged: (String? value) {
+        if (value == 'cancel') {
+          _showCancelOrderDialog(context, order);
+        } else if (value == 'payment') {
+          _showPaymentDialog(context, order);
+        }
+        // else if (value == 'reminder') {
+        // _setReminder(context, order);
+        // }
+      },
+      items: [
+        DropdownMenuItem(
+          value: 'cancel',
+          child: Row(
+            children: [
+              Icon(Icons.cancel, color: Colors.red),
+              SizedBox(width: 5),
+              Text('Cancel'),
+            ],
+          ),
+        ),
+        DropdownMenuItem(
+          value: 'payment',
+          child: Row(
+            children: [
+              Icon(Icons.payment, color: Colors.blue),
+              SizedBox(width: 5),
+              Text('Payment'),
+            ],
+          ),
+        ),
+        // if (order is RentingOrder)
+        //   DropdownMenuItem(
+        //     value: 'reminder',
+        //     child: Row(
+        //       children: [
+        //         Icon(Icons.notifications, color: Colors.orange),
+        //         SizedBox(width: 5),
+        //         Text('Set Reminder'),
+        //       ],
+        //     ),
+        //   ),
       ],
     );
   }
@@ -284,3 +304,163 @@ class CancelOrderDialog extends StatelessWidget {
     );
   }
 }
+
+
+
+/*
+  Widget _buildOrdersContent() {
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        children: [
+          TabBar(
+            tabs: [
+              Tab(text: 'Rental'),
+              Tab(text: 'Purchase'),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _buildHirePurchaseOrders(),
+                _buildRentalOrders(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHirePurchaseOrders() {
+    return Obx(() {
+      final userdata = GetStorage();
+      final useremail = userdata.read('email');
+      final userOrders = _adminController.purchaseOrders
+          .where((order) => order.userEmail == useremail)
+          .toList();
+
+      if (userOrders.isEmpty) {
+        return Center(
+          child: Text('No current hire purchase orders'),
+        );
+      }
+
+      return ListView.builder(
+        itemCount: userOrders.length,
+        itemBuilder: (context, index) {
+          final order = userOrders[index];
+          return ListTile(
+            title: Text('Order ID: ${order.id}'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Total Price: ${order.totalPrice.toStringAsFixed(2)}'),
+                Text('Item:  ${order.tent.name}'),
+                Text('Delivery info:  ${order.deliveryInfo}'),
+                _buildStatusIndicator(order.isDelivered, order.isPaid),
+              ],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.cancel),
+                  onPressed: () {
+                    _showCancelOrderDialog(context, order);
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.payment),
+                  onPressed: () {
+                    _showPaymentDialog(context, order);
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    });
+  }
+
+  Widget _buildRentalOrders() {
+    final userdata = GetStorage();
+    final _userEmail = userdata.read('email');
+    return Obx(() {
+      final userOrders = _adminController.rentalOrders
+          .where((order) => order.userEmail == _userEmail)
+          .toList();
+
+      if (userOrders.isEmpty) {
+        return Center(
+          child: Text('No current rental orders'),
+        );
+      }
+
+      return ListView.builder(
+        itemCount: userOrders.length,
+        itemBuilder: (context, index) {
+          final order = userOrders[index];
+          return ListTile(
+            title: Text('Order ID: ${order.id}'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Total Price: ${order.totalPrice.toStringAsFixed(2)}'),
+                Text('Item:  ${order.tent.name}'),
+                Text('Delivery info:  ${order.deliveryInfo}'),
+                _buildStatusIndicator(order.isDelivered, order.isPaid),
+              ],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.cancel),
+                  onPressed: () {
+                    _showCancelOrderDialog(context, order);
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.payment),
+                  onPressed: () {
+                    _showPaymentDialog(context, order);
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    });
+  }
+
+  Widget _buildStatusIndicator(bool isDelivered, bool isPaid) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Icon(
+        //   isDelivered ? Icons.check_circle : Icons.cancel,
+        //   color: isDelivered ? Colors.green : Colors.red,
+        // ),
+        // SizedBox(width: 5),
+        // Text(
+        //   isDelivered ? 'Delivered' : 'Not Delivered',
+        //   style: TextStyle(color: isDelivered ? Colors.green : Colors.red),
+        // ),
+        SizedBox(width: 10),
+        Icon(
+          isPaid ? Icons.check_circle : Icons.cancel,
+          color: isPaid ? Colors.green : Colors.red,
+        ),
+        SizedBox(width: 5),
+        Text(
+          isPaid ? 'Paid' : 'Not Paid',
+          style: TextStyle(color: isPaid ? Colors.green : Colors.red),
+        ),
+      ],
+    );
+  }
+*/
+ 

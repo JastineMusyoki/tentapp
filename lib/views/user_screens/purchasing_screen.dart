@@ -10,16 +10,16 @@ import '../../data/products_model.dart';
 
 final userdata = GetStorage();
 
-class RentScreen extends StatefulWidget {
+class PurchasingScreen extends StatefulWidget {
   final Tent tent;
 
-  RentScreen({required this.tent});
+  PurchasingScreen({required this.tent});
 
   @override
-  _RentScreenState createState() => _RentScreenState();
+  _PurchasingScreenState createState() => _PurchasingScreenState();
 }
 
-class _RentScreenState extends State<RentScreen> {
+class _PurchasingScreenState extends State<PurchasingScreen> {
   final AdminController _adminController = Get.find<AdminController>();
 
   int _quantity = 1;
@@ -49,12 +49,12 @@ class _RentScreenState extends State<RentScreen> {
             ? Center(
                 child: CircularProgressIndicator(),
               )
-            : _buildRentForm();
+            : _buildPurchaseForm();
       }),
     );
   }
 
-  Widget _buildRentForm() {
+  Widget _buildPurchaseForm() {
     double totalPrice = widget.tent.rentalPrice * _quantity;
 
     return Padding(
@@ -133,7 +133,7 @@ class _RentScreenState extends State<RentScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  _placeRentalOrder();
+                  _placePurchaseOrder();
                 },
                 style: ElevatedButton.styleFrom(
                   primary: Colors.amberAccent,
@@ -155,7 +155,7 @@ class _RentScreenState extends State<RentScreen> {
     );
   }
 
-  void _placeRentalOrder() {
+  void _placePurchaseOrder() {
     if (_quantity <= 0) {
       Get.snackbar('Error', 'Quantity must be at least 1');
       return;
@@ -166,18 +166,17 @@ class _RentScreenState extends State<RentScreen> {
     String userEmail = userdata.read('email');
     String documentId = generateRandomString(length: 10);
 
-    RentalOrder rentalOrder = RentalOrder(
+    PurchaseOrder purchaseOrder = PurchaseOrder(
         id: documentId,
         userEmail: userEmail,
         tent: widget.tent,
         quantity: _quantity,
         totalPrice: totalPrice,
         deliveryInfo: deliveryInfo,
-        createdAt: DateTime.now(),
         isDelivered: false,
         isPaid: false);
 
-    _adminController.placeRentalOrder(rentalOrder);
+    _adminController.placePurchaseOrder(purchaseOrder);
 
     // Navigate back or show confirmation
     Get.back();

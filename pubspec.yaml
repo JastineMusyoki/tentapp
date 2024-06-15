@@ -26,6 +26,7 @@ dependencies:
   mpesa_flutter_plugin: ^1.6.1
   carousel_slider: ^4.2.1
   get_storage: ^2.1.1
+  mailer: ^6.1.0
  
 
 dev_dependencies:

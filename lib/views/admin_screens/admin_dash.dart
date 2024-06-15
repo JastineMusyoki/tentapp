@@ -15,9 +15,7 @@ import 'product_listings.dart';
 class AdminDashboard extends StatelessWidget {
   AuthController authController = Get.find();
   AdminController controller = Get.put(AdminController());
-  // CreateProductController productController =
-  //     Get.put(CreateProductController());
-
+  
   AdminDashboard({required this.authController});
 
   @override
